@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lunatic — Reporte de desempeño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --black:#090909;
+  --white:#ffffff;
+  --off-white:#f7f7f5;
+  --gray-100:#efefed;
+  --gray-200:#dededb;
+  --gray-400:#a0a09c;
+  --gray-600:#6a6a66;
+  --cyan:#00f5e4;
+  --purple:#8b5cf6;
+  --magenta:#f050f8;
+  --up:#00d68f;
+  --down:#ff4757;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--off-white);
+  font-family:var(--font-body);
+  color:var(--black);
+  min-height:100vh;
+}
+
+/* ── LAYOUT ── */
+.shell{max-width:1080px;margin:0 auto;padding:28px 24px 60px;}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:32px;
+}
+.logo{display:flex;align-items:center;gap:6px;}
+.logo-wordmark{
+  font-family:var(--font-head);font-size:20px;font-weight:800;
+  color:var(--black);letter-spacing:-0.5px;
+}
+.logo-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:conic-gradient(from 180deg,var(--magenta),var(--purple),var(--cyan));
+  margin-left:1px;
+}
+.topbar-controls{display:flex;gap:8px;align-items:center;}
+.ctrl-select{
+  font-family:var(--font-body);font-size:13px;font-weight:500;
+  padding:7px 14px;border-radius:99px;
+  border:1.5px solid var(--gray-200);
+  background:var(--white);color:var(--black);
+  cursor:pointer;outline:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  padding-right:28px;
+}
+.ctrl-select:focus{border-color:var(--purple);}
+
+/* ── HERO CARD ── */
+.hero-card{
+  background:var(--black);border-radius:20px;
+  padding:28px 32px;margin-bottom:20px;
+  display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;
+  position:relative;overflow:hidden;
+}
+.hero-card::before{
+  content:'';position:absolute;
+  top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,0.3),transparent 70%);
+  pointer-events:none;
+}
+.hero-card::after{
+  content:'';position:absolute;
+  bottom:-40px;left:30%;width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,245,228,0.15),transparent 70%);
+  pointer-events:none;
+}
+.hero-left{display:flex;align-items:center;gap:16px;}
+.hero-avatar{
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,var(--magenta),var(--purple),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--black);
+  flex-shrink:0;
+}
+.hero-name{
+  font-family:var(--font-head);font-size:22px;font-weight:800;
+  color:var(--white);letter-spacing:-0.5px;
+}
+.hero-meta{font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px;}
+.hero-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.hero-pill{
+  font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;
+  border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);
+}
+.hero-period{
+  text-align:right;
+  font-family:var(--font-head);
+}
+.hero-period-label{font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px;}
+.hero-period-value{font-size:18px;font-weight:700;color:var(--white);margin-top:4px;}
+
+/* ── KPI STRIP ── */
+.kpi-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;margin-bottom:20px;
+}
+.kpi-card{
+  background:var(--white);border-radius:16px;
+  padding:20px 22px;
+  border:1.5px solid var(--gray-100);
+  position:relative;overflow:hidden;
+}
+.kpi-accent{
+  position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:16px 16px 0 0;
+}
+.kpi-accent.a1{background:linear-gradient(90deg,var(--cyan),var(--purple));}
+.kpi-accent.a2{background:linear-gradient(90deg,var(--purple),var(--magenta));}
+.kpi-accent.a3{background:linear-gradient(90deg,var(--magenta),var(--cyan));}
+.kpi-label{
+  font-size:11px;font-weight:500;color:var(--gray-400);
+  text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;
+}
+.kpi-num{
+  font-family:var(--font-head);font-size:32px;font-weight:800;
+  color:var(--black);letter-spacing:-1.5px;line-height:1;
+  margin-bottom:8px;
+}
+.kpi-delta{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:600;padding:3px 8px;
+  border-radius:99px;
+}
+.kpi-delta.up{background:rgba(0,214,143,0.1);color:var(--up);}
+.kpi-delta.dn{background:rgba(255,71,87,0.1);color:var(--down);}
+.kpi-vs{font-size:11px;color:var(--gray-400);margin-top:5px;}
+
+/* ── CHARTS GRID ── */
+.charts-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;margin-bottom:14px;
+}
+.charts-grid.one-col{grid-template-columns:1fr;}
+.chart-card{
+  background:var(--white);border-radius:16px;
+  padding:20px 22px;border:1.5px solid var(--gray-100);
+}
+.chart-card.span2{grid-column:1/-1;}
+.chart-head{margin-bottom:14px;}
+.chart-title{
+  font-family:var(--font-head);font-size:14px;font-weight:700;
+  color:var(--black);letter-spacing:-0.2px;
+}
+.chart-sub{font-size:11px;color:var(--gray-400);margin-top:2px;}
+.legend{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-600);}
+.leg-sq{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* ── INSIGHT STRIP ── */
+.insight-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;margin-bottom:20px;
+}
+.insight-card{
+  background:var(--white);border-radius:16px;
+  padding:18px 20px;border:1.5px solid var(--gray-100);
+}
+.ins-tag{
+  display:inline-block;
+  font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.8px;
+  color:var(--purple);margin-bottom:8px;
+}
+.ins-text{font-size:12px;color:var(--gray-600);line-height:1.6;}
+
+/* ── FOOTER ── */
+.dash-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:16px;border-top:1px solid var(--gray-200);
+}
+.footer-left{font-size:11px;color:var(--gray-400);}
+.footer-brand{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-head);font-size:12px;font-weight:700;color:var(--gray-400);
+}
+.footer-brand-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:conic-gradient(from 180deg,var(--magenta),var(--cyan));
+}
+
+/* ── LOADING ── */
+.loading-overlay{
+  position:fixed;inset:0;background:var(--off-white);
+  display:flex;align-items:center;justify-content:center;
+  z-index:100;transition:opacity 0.4s;
+}
+.loading-overlay.hidden{opacity:0;pointer-events:none;}
+.loader-logo{
+  font-family:var(--font-head);font-size:28px;font-weight:800;
+  color:var(--black);letter-spacing:-1px;
+  animation:pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* ── ANIMATIONS ── */
+.fade-in{animation:fadeIn 0.35s ease both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:680px){
+  .kpi-strip{grid-template-columns:1fr 1fr;}
+  .charts-grid{grid-template-columns:1fr;}
+  .insight-strip{grid-template-columns:1fr;}
+  .hero-card{grid-template-columns:1fr;}
+  .hero-period{text-align:left;}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loader">
+  <div class="loader-logo">Lunatic.</div>
+</div>
+
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <span class="logo-wordmark">Lunatic</span>
+      <div class="logo-dot"></div>
+    </div>
+    <div class="topbar-controls">
+      <select class="ctrl-select" id="sel-client" onchange="loadClient()">
+        <option value="INB">Inbiotech</option>
+        <option value="BSQ">Bosquira</option>
+        <option value="PYM">Piqueos &amp; Moritos</option>
+        <option value="ACQ">Acqualuxe</option>
+      </select>
+      <select class="ctrl-select" id="sel-month" onchange="loadClient()">
+        <option>Enero</option>
+        <option>Febrero</option>
+        <option>Marzo</option>
+        <option>Abril</option>
+        <option selected>Mayo</option>
+      </select>
+      <select class="ctrl-select" id="sel-year" onchange="loadClient()">
+        <option>2025</option>
+        <option selected>2026</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero-card fade-in" id="hero-card">
+    <div class="hero-left">
+      <div class="hero-avatar" id="hero-av">IN</div>
+      <div>
+        <div class="hero-name" id="hero-name">Inbiotech</div>
+        <div class="hero-meta" id="hero-meta">Salud / Cosmética · Ecuador</div>
+        <div class="hero-pills" id="hero-pills">
+          <span class="hero-pill">Meta Ads</span>
+          <span class="hero-pill">Community</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-period">
+      <div class="hero-period-label">Período</div>
+      <div class="hero-period-value" id="hero-period">Mayo 2026</div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-card fade-in" style="animation-delay:0.05s">
+      <div class="kpi-accent a1"></div>
+      <div class="kpi-label">Visualizaciones</div>
+      <div class="kpi-num" id="k-views">263.9K</div>
+      <div class="kpi-delta up" id="k-views-d">↑ +320.4%</div>
+      <div class="kpi-vs">vs mes anterior</div>
+    </div>
+    <div class="kpi-card fade-in" style="animation-delay:0.1s">
+      <div class="kpi-accent a2"></div>
+      <div class="kpi-label">Interacciones</div>
+      <div class="kpi-num" id="k-inter">995</div>
+      <div class="kpi-delta up" id="k-inter-d">↑ +41.1%</div>
+      <div class="kpi-vs">vs mes anterior</div>
+    </div>
+    <div class="kpi-card fade-in" style="animation-delay:0.15s">
+      <div class="kpi-accent a3"></div>
+      <div class="kpi-label">Nuevos seguidores</div>
+      <div class="kpi-num" id="k-seg">220</div>
+      <div class="kpi-delta up" id="k-seg-d">↑ +17.0%</div>
+      <div class="kpi-vs">vs mes anterior</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="charts-grid fade-in" style="animation-delay:0.2s">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title">Visualizaciones — tendencia</div>
+        <div class="chart-sub">Últimos 6 meses · Orgánico vs Pauta</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:#00f5e4"></div>Orgánico</div>
+          <div class="leg"><div class="leg-sq" style="background:#8b5cf6"></div>Pauta</div>
+        </div>
+      </div>
+      <div style="position:relative;height:180px;">
+        <canvas id="c-views" role="img" aria-label="Tendencia de visualizaciones orgánicas y de pauta"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title">Interacciones por formato</div>
+        <div class="chart-sub">Reels · Carruseles · Estáticos</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:#8b5cf6"></div>Reels</div>
+          <div class="leg"><div class="leg-sq" style="background:#00f5e4"></div>Carruseles</div>
+          <div class="leg"><div class="leg-sq" style="background:#f050f8"></div>Estáticos</div>
+        </div>
+      </div>
+      <div style="position:relative;height:180px;">
+        <canvas id="c-format" role="img" aria-label="Interacciones por tipo de formato de contenido"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="charts-grid one-col fade-in" style="animation-delay:0.25s;margin-bottom:14px;">
+    <div class="chart-card span2">
+      <div class="chart-head">
+        <div class="chart-title">Nuevos seguidores — crecimiento mensual</div>
+        <div class="chart-sub">Evolución de captación orgánica de audiencia</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:#f050f8"></div>Seguidores nuevos / mes</div>
+        </div>
+      </div>
+      <div style="position:relative;height:150px;">
+        <canvas id="c-seg" role="img" aria-label="Crecimiento mensual de seguidores nuevos"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="insight-strip fade-in" style="animation-delay:0.3s">
+    <div class="insight-card">
+      <div class="ins-tag">✦ Highlight del mes</div>
+      <div class="ins-text" id="ins-0">Mayo fue el mes con mayor volumen de visualizaciones, impulsado por Reels con tendencias del sector.</div>
+    </div>
+    <div class="insight-card">
+      <div class="ins-tag">◈ Formato ganador</div>
+      <div class="ins-text" id="ins-1">Los Reels concentran el 72% de las interacciones totales. Priorizar este formato maximiza el alcance orgánico.</div>
+    </div>
+    <div class="insight-card">
+      <div class="ins-tag">◎ Oportunidad</div>
+      <div class="ins-text" id="ins-2">Engagement rate en 3.77%, por encima del promedio del sector (2.1%). Mantener frecuencia y consistencia.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="dash-footer">
+    <div class="footer-left">
+      Reporte generado por Lunatic · <span id="footer-period">Mayo 2026</span> · Fuente: Meta Business Suite
+    </div>
+    <div class="footer-brand">
+      <div class="footer-brand-dot"></div>
+      Powered by NAIA
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   DATA.JSON — AQUÍ ACTUALIZAS CADA MES
+   Agrega una fila nueva bajo el cliente correspondiente.
+   ───────────────────────────────────────── */
+const DATA = {
+  INB:{
+    name:"Inbiotech",avatar:"IN",sector:"Salud / Cosmética · Ecuador",
+    services:["Meta Ads","Community"],
+    kpi:{views:"263.9K",inter:"995",seg:"220",dv:"+320.4%",di:"+41.1%",ds:"+17.0%",upv:true,upi:true,ups:true},
+    trend_org:[18000,24000,31000,42000,62000,96000],
+    trend_paid:[55000,72000,88000,105000,130000,168000],
+    fmt:[720,185,90],
+    seg_hist:[88,112,145,168,188,220],
+    insights:[
+      "Mayo fue el mes con mayor volumen de visualizaciones, impulsado por Reels con tendencias del sector.",
+      "Los Reels concentran el 72% de las interacciones totales. Priorizar este formato maximiza el alcance orgánico.",
+      "Engagement rate en 3.77%, por encima del promedio del sector (2.1%). Mantener frecuencia y consistencia."
+    ]
+  },
+  BSQ:{
+    name:"Bosquira",avatar:"BS",sector:"Inmobiliaria · Ecuador",
+    services:["Meta Ads","Google Ads","Community"],
+    kpi:{views:"1.62M",inter:"420",seg:"1,216",dv:"+51.8%",di:"+8.2%",ds:"+183.7%",upv:true,upi:true,ups:true},
+    trend_org:[8000,10000,11500,12000,13000,14200],
+    trend_paid:[620000,840000,980000,1200000,1420000,1620000],
+    fmt:[210,150,60],
+    seg_hist:[180,280,450,680,920,1216],
+    insights:[
+      "Bosquira alcanzó 1.62M de visualizaciones por pauta en mayo, nuevo récord histórico para la cuenta.",
+      "La estrategia full-funnel (82% pauta) es clave: el tráfico pagado domina el alcance inmobiliario.",
+      "Con 1,216 nuevos seguidores (+183.7%), el crecimiento de comunidad supera el objetivo trimestral."
+    ]
+  },
+  PYM:{
+    name:"Piqueos & Moritos",avatar:"PM",sector:"Alimentos / F&B · Ecuador",
+    services:["Community","Producción AV"],
+    kpi:{views:"83.3K",inter:"2,100",seg:"418",dv:"+42.2%",di:"+12.1%",ds:"+153.7%",upv:true,upi:true,ups:true},
+    trend_org:[28000,36000,44000,56000,68000,83300],
+    trend_paid:[8000,11000,14000,18000,24000,31000],
+    fmt:[1450,520,130],
+    seg_hist:[58,88,130,200,300,418],
+    insights:[
+      "El alcance orgánico creció 42.2% gracias al rediseño visual del feed y mayor frecuencia de Reels.",
+      "Los Reels representan el 69% de interacciones. El contenido de producto con humor genera alta viralidad.",
+      "Con +153.7% en seguidores nuevos, mayo fue el mejor mes en la historia de Piqueos & Moritos."
+    ]
+  },
+  ACQ:{
+    name:"Acqualuxe",avatar:"AQ",sector:"Bienestar / Spa · Ecuador",
+    services:["Meta Ads","Community"],
+    kpi:{views:"74.5K",inter:"680",seg:"142",dv:"+11.0%",di:"+9.7%",ds:"+22.4%",upv:true,upi:true,ups:true},
+    trend_org:[12000,15000,18000,22000,28000,34000],
+    trend_paid:[28000,32000,36000,40000,44000,48000],
+    fmt:[390,220,70],
+    seg_hist:[62,78,90,105,116,142],
+    insights:[
+      "El alcance total creció 11% impulsado por contenido aspiracional de bienestar y lifestyle de marca.",
+      "Carruseles educativos sobre tratamientos tienen el mayor tiempo de retención. Escalar este formato.",
+      "Crecimiento de seguidores consistente (+22.4%). Fidelización fuerte con audiencia femenina 25-40."
+    ]
+  }
+};
+
+const MONTHS_LABELS = ["Dic","Ene","Feb","Mar","Abr","May"];
+let cViews, cFormat, cSeg;
+
+function fmtNum(n){
+  if(n>=1000000) return (n/1000000).toFixed(1)+"M";
+  if(n>=1000) return (n/1000).toFixed(1)+"K";
+  return Math.round(n).toString();
+}
+
+function initCharts(d){
+  const base = {
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{font:{size:10,family:"DM Sans"},color:"#a0a09c"},grid:{display:false}},
+      y:{ticks:{font:{size:10,family:"DM Sans"},color:"#a0a09c",callback:v=>fmtNum(v)},grid:{color:"rgba(0,0,0,0.04)"},beginAtZero:true,border:{display:false}}
+    }
+  };
+
+  cViews = new Chart(document.getElementById("c-views"),{
+    type:"line",
+    data:{labels:MONTHS_LABELS,datasets:[
+      {data:d.trend_org,borderColor:"#00f5e4",backgroundColor:"rgba(0,245,228,0.07)",fill:true,tension:0.45,pointRadius:4,pointBackgroundColor:"#00f5e4",borderWidth:2.5},
+      {data:d.trend_paid,borderColor:"#8b5cf6",backgroundColor:"rgba(139,92,246,0.07)",fill:true,tension:0.45,pointRadius:4,pointBackgroundColor:"#8b5cf6",borderWidth:2.5}
+    ]},
+    options:{...base}
+  });
+
+  cFormat = new Chart(document.getElementById("c-format"),{
+    type:"bar",
+    data:{
+      labels:["Reels","Carruseles","Estáticos"],
+      datasets:[{data:d.fmt,backgroundColor:["#8b5cf6","#00f5e4","#f050f8"],borderRadius:8,borderSkipped:false}]
+    },
+    options:{...base,scales:{...base.scales,x:{...base.scales.x,ticks:{...base.scales.x.ticks,autoSkip:false}}}}
+  });
+
+  cSeg = new Chart(document.getElementById("c-seg"),{
+    type:"bar",
+    data:{labels:MONTHS_LABELS,datasets:[{data:d.seg_hist,backgroundColor:"rgba(240,80,248,0.85)",borderRadius:8,borderSkipped:false}]},
+    options:{...base}
+  });
+}
+
+function updateCharts(d){
+  cViews.data.datasets[0].data = d.trend_org;
+  cViews.data.datasets[1].data = d.trend_paid;
+  cViews.update("active");
+  cFormat.data.datasets[0].data = d.fmt;
+  cFormat.update("active");
+  cSeg.data.datasets[0].data = d.seg_hist;
+  cSeg.update("active");
+}
+
+function setDelta(id, val, up){
+  const el = document.getElementById(id);
+  el.textContent = (up ? "↑ " : "↓ ") + val;
+  el.className = "kpi-delta " + (up ? "up" : "dn");
+}
+
+function loadClient(){
+  const key = document.getElementById("sel-client").value;
+  const month = document.getElementById("sel-month").value;
+  const year = document.getElementById("sel-year").value;
+  const d = DATA[key];
+
+  document.getElementById("hero-av").textContent = d.avatar;
+  document.getElementById("hero-name").textContent = d.name;
+  document.getElementById("hero-meta").textContent = d.sector;
+  document.getElementById("hero-pills").innerHTML = d.services.map(s=>`<span class="hero-pill">${s}</span>`).join("");
+  document.getElementById("hero-period").textContent = month + " " + year;
+  document.getElementById("footer-period").textContent = month + " " + year;
+
+  document.getElementById("k-views").textContent = d.kpi.views;
+  document.getElementById("k-inter").textContent = d.kpi.inter;
+  document.getElementById("k-seg").textContent = d.kpi.seg;
+  setDelta("k-views-d", d.kpi.dv, d.kpi.upv);
+  setDelta("k-inter-d", d.kpi.di, d.kpi.upi);
+  setDelta("k-seg-d", d.kpi.ds, d.kpi.ups);
+
+  d.insights.forEach((txt,i) => {
+    document.getElementById("ins-"+i).textContent = txt;
+  });
+
+  updateCharts(d);
+}
+
+/* ── INIT ── */
+window.addEventListener("load", () => {
+  initCharts(DATA.INB);
+  setTimeout(() => {
+    document.getElementById("loader").classList.add("hidden");
+  }, 600);
+});
+</script>
+</body>
+</html>
